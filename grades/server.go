@@ -102,7 +102,6 @@ func (sh studentsHandler) addGrade(w http.ResponseWriter, r *http.Request, id in
 		return
 	}
 	student.Grades = append(student.Grades, grade)
-	w.WriteHeader(http.StatusCreated)
 	data, err := sh.toJson(student)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
