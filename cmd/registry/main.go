@@ -22,16 +22,25 @@ func main() {
 	srv.Addr = registry.ServicePort
 
 	go func() {
-		log.Println(srv.ListenAndServe())
+		if err := srv.ListenAndServe(); err != nil {
+			if err == http.ErrServerClosed {
+				log.Printf("%s shutdown successfully\n", "registry service")
+			} else {
+				log.Printf("%s shutdown failed, err: %v\n", "registry service", err)
+			}
+		}
 		cancel()
 	}()
 
 	go func() {
-		log.Println("registry service started")
+		log.Println("registry service start up. press ctrl + c to stop it")
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
-		srv.Shutdown(ctx)
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			log.Printf("%s shutdown failed, err: %v\n", "registry service", err)
+		}
 		cancel()
 	}()
 	<-ctx.Done()

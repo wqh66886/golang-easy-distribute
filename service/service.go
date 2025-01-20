@@ -11,11 +11,12 @@ import (
 	"syscall"
 )
 
+// Start The entry for service startup
 func Start(ctx context.Context, host, port string, reg registry.Registration, registerFunc func()) (context.Context, error) {
+	// registration service take precede
 	registerFunc()
-	// 启动log service 服务
 	ctx = startService(ctx, reg.ServiceName, host, port)
-	// 将log service 服务注册到注册中心
+	// when service start up register service
 	err := registry.RegisterService(reg)
 	if err != nil {
 		return ctx, err
@@ -23,6 +24,7 @@ func Start(ctx context.Context, host, port string, reg registry.Registration, re
 	return ctx, nil
 }
 
+// startService this function is used to start the service
 func startService(ctx context.Context, serviceName registry.ServiceName, host, port string) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -30,39 +32,39 @@ func startService(ctx context.Context, serviceName registry.ServiceName, host, p
 	srv.Addr = host + ":" + port
 
 	go func() {
-		err := srv.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			log.Printf("service start up failed, err: %v\n", err)
-		}
-		log.Println("service is stopped")
-		// 从注册中心注销服务
-		err = registry.DeregisterService(registry.Registration{
-			ServiceName: serviceName,
-			ServiceURL:  fmt.Sprintf("http://%s:%s", host, port),
-		})
-		if err != nil {
-			log.Println(err)
+		if err := srv.ListenAndServe(); err != nil {
+			if err != http.ErrServerClosed {
+				err = registry.DeregisterService(registry.Registration{
+					ServiceName: serviceName,
+					ServiceURL:  fmt.Sprintf("http://%s:%s", host, port),
+				})
+				if err != nil {
+					log.Printf("%s remove failed, err : %v\n", serviceName, err)
+				}
+			} else {
+				log.Printf("%s service is shutdown", serviceName)
+			}
 		}
 		cancel()
 	}()
 
 	go func() {
-		log.Printf("%s service is started up on %s. Press ctl + c to stop", serviceName, port)
+		log.Printf("%s is started up on port %s. Press ctl + c to stop it", serviceName, port)
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
-		// 注销服务
+		// listen signal to remove service from registry
 		err := registry.DeregisterService(registry.Registration{
 			ServiceName: serviceName,
 			ServiceURL:  fmt.Sprintf("http://%s:%s", host, port),
 		})
 		if err != nil {
-			log.Printf("remove service failed, err: %v\n", err)
+			log.Printf("%s remove failed, err : %v\n", serviceName, err)
 		}
 		err = srv.Shutdown(ctx)
 		if err != nil {
-			log.Printf("service shutdown failed, err: %v\n", err)
-		} // 关闭服务
+			log.Printf("%s shutdown failed, err: %v\n", serviceName, err)
+		}
 		cancel()
 	}()
 
