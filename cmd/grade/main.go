@@ -8,6 +8,7 @@ import (
 	"github.com/wqh/easy/distribute/registry"
 	"github.com/wqh/easy/distribute/service"
 	stlog "log"
+	"strings"
 )
 
 func main() {
@@ -32,7 +33,8 @@ func main() {
 	}
 
 	if logProvider, err := registry.GetProviders(registry.LogService); err == nil {
-		fmt.Printf("Logging service found at: %s\n", logProvider[0])
+		fmt.Printf("%s found at: [%s]\n", registry.LogService, strings.Join(logProvider, ","))
+		// TODO: What should I do when multiple log services are used
 		log.SetClientLogger(logProvider[0], registry.GradeService)
 	}
 

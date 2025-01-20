@@ -9,7 +9,7 @@ import (
 )
 
 func SetClientLogger(serviceUrl string, clientService registry.ServiceName) {
-	stlog.SetPrefix(fmt.Sprintf("[%v] -", clientService))
+	stlog.SetPrefix(fmt.Sprintf("[%v] - ", clientService))
 	stlog.SetFlags(0)
 	stlog.SetOutput(&clientLogger{
 		url: serviceUrl,

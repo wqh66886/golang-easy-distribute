@@ -17,7 +17,11 @@ func (fl fileLog) Write(data []byte) (int, error) {
 	if err != nil {
 		return 0, nil
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("file closing failed, err:%v\n", err)
+		}
+	}()
 	return f.Write(data)
 }
 

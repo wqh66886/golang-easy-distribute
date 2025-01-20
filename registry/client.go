@@ -101,8 +101,8 @@ func (p *providers) update(pat patch) {
 
 	for _, entry := range pat.Removed {
 		if urls, exist := p.services[entry.Name]; exist {
-			for i, url := range urls {
-				if url == entry.URL {
+			for i, _url := range urls {
+				if _url == entry.URL {
 					p.services[entry.Name] = append(urls[:i], urls[i+1:]...)
 				}
 			}

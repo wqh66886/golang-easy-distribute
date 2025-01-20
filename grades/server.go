@@ -110,12 +110,21 @@ func (sh studentsHandler) addGrade(w http.ResponseWriter, r *http.Request, id in
 	}
 	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func (sh studentsHandler) toJson(obj any) ([]byte, error) {
+	mp := map[string]any{
+		"code":    http.StatusOK,
+		"message": "success",
+		"data":    obj,
+	}
 	buf := bytes.Buffer{}
 	encode := json.NewEncoder(&buf)
-	err := encode.Encode(obj)
+	err := encode.Encode(mp)
 	if err != nil {
 		return nil, err
 	}
