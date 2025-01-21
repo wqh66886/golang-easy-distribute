@@ -28,7 +28,8 @@ var (
 )
 
 func (s Students) GetById(id int) (*Student, error) {
-	for i := range s {
+	// for _,student := range s {} //student 是 s 切片的副本,修改 student 里的元素不会影响 s
+	for i := range s { // i 是索引, s[i] 是 s 切片的实际元素,对 s[i]作出修改,对 s[i] 的修改会反映到 s
 		if s[i].ID == id {
 			return &s[i], nil
 		}
