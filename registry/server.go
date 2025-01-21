@@ -29,12 +29,18 @@ func (r *registry) add(reg Registration) error {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	r.registrations = append(r.registrations, reg)
-	if len(reg.RequiredServices) > 0 { // if current service has required services
-		err := r.sendRequiredServices(reg) // send required services to all registered services
-		if err != nil {
-			return err
-		}
+	err := r.sendRequiredServices(reg) // send required services to all registered services
+	if err != nil {
+		return err
 	}
+	r.notify(patch{
+		Added: []patchEntry{
+			{
+				Name: reg.ServiceName,
+				URL:  reg.ServiceURL,
+			},
+		},
+	})
 	return nil
 }
 
@@ -43,6 +49,14 @@ func (r *registry) remove(url string) error {
 	defer r.mutex.RUnlock()
 	for i, reg := range r.registrations {
 		if reg.ServiceURL == url {
+			r.notify(patch{
+				Removed: []patchEntry{
+					{
+						Name: reg.ServiceName,
+						URL:  reg.ServiceURL,
+					},
+				},
+			})
 			r.registrations = append(r.registrations[:i], r.registrations[i+1:]...)
 			return nil
 		}
@@ -83,6 +97,38 @@ func (r *registry) sendPatch(p patch, url string) error {
 		return err
 	}
 	return nil
+}
+
+func (r *registry) notify(fullPatch patch) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	for _, reg := range r.registrations {
+		go func(reg Registration) {
+			for _, reqService := range reg.RequiredServices {
+				p := patch{Added: []patchEntry{}, Removed: []patchEntry{}}
+				sendUpdate := false
+				for _, add := range fullPatch.Added {
+					if add.Name == reqService {
+						p.Added = append(p.Added, add)
+						sendUpdate = true
+					}
+				}
+				for _, remove := range fullPatch.Removed {
+					if remove.Name == reqService {
+						p.Removed = append(p.Removed, remove)
+						sendUpdate = true
+					}
+				}
+				if sendUpdate {
+					err := r.sendPatch(p, reg.ServiceUpdateURL)
+					if err != nil {
+						log.Println(err)
+						return
+					}
+				}
+			}
+		}(reg)
+	}
 }
 
 // RegistryService is a http handler, which handles POST and DELETE requests

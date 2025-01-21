@@ -1,7 +1,6 @@
 package grades
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -44,8 +43,8 @@ func (sh studentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh studentsHandler) getAll(w http.ResponseWriter, r *http.Request) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	mutex.RLock()
+	defer mutex.RUnlock()
 
 	data, err := sh.toJson(students)
 	if err != nil {
@@ -61,8 +60,8 @@ func (sh studentsHandler) getAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sh studentsHandler) getById(w http.ResponseWriter, r *http.Request, id int) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	mutex.RLock()
+	defer mutex.RUnlock()
 
 	student, err := students.GetById(id)
 	if err != nil {
@@ -83,8 +82,8 @@ func (sh studentsHandler) getById(w http.ResponseWriter, r *http.Request, id int
 }
 
 func (sh studentsHandler) addGrade(w http.ResponseWriter, r *http.Request, id int) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	mutex.RLock()
+	defer mutex.RUnlock()
 	student, err := students.GetById(id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -102,30 +101,16 @@ func (sh studentsHandler) addGrade(w http.ResponseWriter, r *http.Request, id in
 		return
 	}
 	student.Grades = append(student.Grades, grade)
-	data, err := sh.toJson(student)
+	w.WriteHeader(http.StatusCreated)
+	data, err := sh.toJson(grade)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(data)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 }
 
-func (sh studentsHandler) toJson(obj any) ([]byte, error) {
-	mp := map[string]any{
-		"code":    http.StatusOK,
-		"message": "success",
-		"data":    obj,
-	}
-	buf := bytes.Buffer{}
-	encode := json.NewEncoder(&buf)
-	err := encode.Encode(mp)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+func (sh studentsHandler) toJson(obj interface{}) ([]byte, error) {
+	return json.Marshal(obj)
 }

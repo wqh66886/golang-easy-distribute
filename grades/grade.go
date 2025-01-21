@@ -24,13 +24,13 @@ type Students []Student
 
 var (
 	students Students
-	mutex    sync.Mutex
+	mutex    sync.RWMutex
 )
 
 func (s Students) GetById(id int) (*Student, error) {
-	for _, student := range s {
-		if student.ID == id {
-			return &student, nil
+	for i := range s {
+		if s[i].ID == id {
+			return &s[i], nil
 		}
 	}
 	return nil, fmt.Errorf("student with id %d not found", id)

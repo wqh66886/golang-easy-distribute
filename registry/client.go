@@ -73,6 +73,7 @@ func (suh *serviceUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		log.Printf("updated received %v\n", pat)
 		prov.update(pat)
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
