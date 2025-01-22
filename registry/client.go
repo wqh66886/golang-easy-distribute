@@ -12,6 +12,15 @@ import (
 
 // RegisterService registers a service with the registry
 func RegisterService(reg Registration) error {
+	heartbeatUrl, err := url.Parse(reg.HeartbeatURL)
+	if err != nil {
+		return err
+	}
+
+	http.HandleFunc(heartbeatUrl.Path, func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+	})
+
 	serviceUpdateUrl, err := url.Parse(reg.ServiceUpdateURL)
 	if err != nil {
 		return err

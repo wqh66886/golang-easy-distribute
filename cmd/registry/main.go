@@ -12,6 +12,9 @@ import (
 )
 
 func main() {
+
+	registry.SetUpRegisterService() // 启动心跳检测
+
 	http.Handle("/services", &registry.RegistryService{})
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -35,6 +35,7 @@ func main() {
 				registry.LogService,
 			},
 			ServiceUpdateURL: fmt.Sprintf("%s/services", address),
+			HeartbeatURL:     fmt.Sprintf("%s/heartbeat", address),
 		},
 		portal.RegisterHandlerFunc,
 	)

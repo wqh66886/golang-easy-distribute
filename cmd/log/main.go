@@ -24,6 +24,7 @@ func main() {
 			ServiceURL:       address,
 			RequiredServices: make([]registry.ServiceName, 0),
 			ServiceUpdateURL: fmt.Sprintf("%s/services", address),
+			HeartbeatURL:     fmt.Sprintf("%s/heartbeat", address),
 		},
 		log.RegisterHandleFunc,
 	)
